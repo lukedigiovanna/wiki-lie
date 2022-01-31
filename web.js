@@ -83,6 +83,11 @@ let playersToRemove = [];
 
 io.on('connection', socket => {
     console.log(socket.id + " connected");
+
+    // fetch this socket's IP
+    let address = socket.handshake.address;
+    console.log('new connection from ' + address);
+
     io.to(socket.id).emit('connection', socket.id);
 
 
@@ -233,7 +238,6 @@ io.on('connection', socket => {
 });
 
 let port = process.env.PORT || 80;
-
 server.listen(process.env.PORT || 80, () => {
     console.log("listening on *:" + port);
 })
