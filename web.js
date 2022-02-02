@@ -208,16 +208,16 @@ Room.prototype.getPlayerWithID = function(id) {
 Room.prototype.kick = function(id) {
     for (let i = 0; i < this.players.length; i++) {
         if (this.players[i].id == id) {
-            this.players.splice(i, 1);
             // check if we are in a game and this is a guesser that we are trying to kick out
             if (this.isInGame && this.turn == i) {
                 // then we need to end the round
                 this.makeGuess("the guesser has left"); // tells the guess function a special message.
             }
-            else {
-                if (i <= this.turn) {
-                    this.turn--;
-                }
+            
+            this.players.splice(i, 1);
+            
+            if (i <= this.turn) {
+                this.turn--;
             }
         }
     }

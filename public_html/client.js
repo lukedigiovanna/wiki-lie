@@ -74,7 +74,7 @@ socket.on('start-round', (room) => {
         }
     });
     // make the wikipedia section go away
-    $("#wikipedia").css("display", "none");
+    $("#wiki-section").css("display", "none");
 });
 
 socket.on("round-results", results => {
