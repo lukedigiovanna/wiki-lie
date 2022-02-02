@@ -7,29 +7,32 @@
         <link rel="stylesheet" href="styles.css">
     </head>
     <body>
+        
         <h1 id="title">
             Wiki-lie 
         </h1>
-
+        
         <div id="main">
             
         </div>
-
+        
         <div id="results" style="text-align: center;">
-
+            
         </div>
-
+        
         <div id="input">
             
         </div>
-        <button> Toggle View </button>
-        <iframe src="https://en.wikipedia.org/wiki/Main_Page" id="wikipedia" style="display: none"></iframe>
-
+        <div id="wikipedia" style="display: none">
+            <button onclick="toggleWiki();"> Toggle View </button>
+            <iframe src="https://en.wikipedia.org/wiki/Main_Page"></iframe>
+        </div>
+        
         <p id="test"></p>
-
+        
         <script src="../socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
         <script src="client.js"></script>
         <script src="ellipsis.js"></script>
     </body>
-</html>
+    </html>

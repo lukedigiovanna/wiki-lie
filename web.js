@@ -8,58 +8,41 @@ const io = new Server(server);
 app.use(express.static(__dirname + '/public_html'))
 
 // const fs = require("fs");
-
 // fs.readFile('users.txt', 'utf-8', (err, userdata) => {
 //     if (err) {
 //         console.log(err); return;
 //     }
-
 //     // do initial parse of userdata.
-
 // });
 
-let players = []; // store each player as a JSON object with their socket id and username
-let choices = []; // store each choice as a JSON object with the choice and the originating player's socket id
-
-let guesserIndex = 0;
-
-let inGame = false;
-let currentWord = null; 
-
-let lobby = "lobby";
-
-function usernameExists(user) {
-    for (let i = 0; i < players.length; i++) {
-        if (players[i].username == user) {
-            return true;
-        }
-    }
-    return false;
-}
-
+/*
+UTILITY FUNCTIONS:
+*/
+/**
+ * Checks if a given username is valid.
+ * i.e. it is within 1 and 20 characters and contains only letters, numbers, and underscores.
+ * @param {string} user Username to check
+ * @returns true if the user is valid or an error reason if it is not.
+ */
 function usernameIsValid(user) {
     if (user.length < 1 || user.length > 20) {
-        return "notsize";
+        return "Your username must be between 1 and 20 characters";
     }
     // a username is valid if it is between 1 and 20 characters and is composed of the following letters
     const validLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
     for (let i = 0; i < user.length; i++) {
         if (!validLetters.includes(user.charAt(i))) {
-            return "badletter";
+            return "Your username can only contain letters, numbers, and underscores";
         }
     }
     return true;
 }
 
-function getPlayerWithID(id) {
-    for (let i = 0; i < players.length; i++) {
-        if (players[i].id == id) {
-            return players[i];
-        }
-    }
-    return null;
-}
-
+/**
+ * Formats a given article. This simply means that the first letter of every word will become capitalized
+ * @param {string} article Article name to format
+ * @returns the formatted version of the article name
+ */
 function formatArticle(article) {
     // follow rules that the beginning of each word should be upper case
     let tokens = article.split(' '); // separate by spaces
@@ -73,13 +56,180 @@ function formatArticle(article) {
     return str.substring(0, str.length - 1);
 }
 
-function chooseArticle() {
-    let ind = Math.floor(Math.random() * choices.length);
-    let choice = choices[ind];
+function generateRoomID() {
+    const availableLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345789";
+    let id = "";
+    for (let i = 0; i < 6; i++) {
+        id += availableLetters.charAt(Math.floor(Math.random() * availableLetters.length));
+    } 
+    return id;
+}
+
+/**
+ * Initializes a Player with some given data
+ * @param {string} username Username of the player
+ * @param {string} ip IP address of the client
+ * @param {string} socketID Specific socket ID of the client
+ */
+function Player(username, ip, socketID) {
+    this.ip = ip;
+    this.username = username;
+    this.id = socketID;
+    this.isHost = false;
+    this.isGuesser = false;
+    this.currentWord = null;
+    this.points = 0;
+}
+
+/**
+ * Stores the necessary data for a choice
+ * @param {string} article Article name
+ * @param {string} socketID ID of socket that submitted this article
+ */
+function Choice(article, socketID) {
+    this.article = article;
+    this.id = socketID;
+}
+
+// define the ROOM class
+/**
+ * Class to represent a room, which is an instance of a game.
+ * Contains information like the rooms ID, password, players, etc. 
+ */
+function Room() {
+    this.players = [];
+    this.choices = [];
+    this.isInGame = false;
+    this.turn = 0;
+    this.currentWord = null;
+    this.maxPlayers = 8; // set 8 as the default maximum allowed players
+    this.id = generateRoomID();
+}
+
+/**
+ * Chooses a random article from all submitted ones.
+ * @returns A random article
+ */
+Room.prototype.chooseArticle = function() {
+    let ind = Math.floor(Math.random() * this.choices.length);
+    let choice = this.choices[ind];
     return choice;
 }
 
-let playersToRemove = [];
+/**
+ * Check if the given username is already taken
+ * @param {*} user 
+ * @returns 
+ */
+Room.prototype.usernameExists = function(user) {
+    for (let i = 0; i < this.players.length; i++) {
+        if (this.players[i].username == user) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Returns the player instance with a given socket ID.
+ * @param {string} id Socket ID
+ * @returns The player
+ */
+Room.prototype.getPlayerWithID = function(id) {
+    for (let i = 0; i < players.length; i++) {
+        if (players[i].id == id) {
+            return players[i];
+        }
+    }
+    return null; // didn't find the player 
+}
+
+/**
+ * Messages all clients in this room updated information about
+ * players, choices, connectivity, etc.
+ */
+Room.prototype.updatePlayerList = function() {
+    io.to(this.id).emit("users-update", this);
+}
+
+/**
+ * Chooses a new word and starts the round for the clients.
+ */
+Room.prototype.startRound = function() {
+    this.currentWord = this.chooseArticle();
+    this.isInGame = true;
+    io.to(this.id).emit("start-round", this);
+}
+
+/**
+ * Gets the player with a particular id
+ * @param {string} id Socket ID of player to fetch
+ */
+Room.prototype.getPlayerWithID = function(id) {
+    for (let i = 0; i < this.players.length; i++) {
+        if (this.players[i].id == id) {
+            return this.players[i];
+        }
+    }
+    return null;
+}
+
+/**
+ * 
+ * @param {string} guessID Socket ID of the guess of the guesser
+ */
+Room.prototype.makeGuess = function(guessID) {
+    let guesser = this.players[this.turn];
+    // check if the guess was correct
+    if (guessID == this.currentWord.id) {
+        // add points 
+        guesser.points += 1; // to the guesser for guessing correctly
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i].id == this.currentWord.id) {
+                this.players[i].points += 1; // that player also gets a point for describing the topic so believably.
+            }
+        }
+    }
+    else { // the guess was incorrect
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i].id == guessID) {
+                this.players[i].points += 2; // if they tricked the guesser, they get 2 points
+                break;
+            }
+        }
+    }
+
+    // remove that chosen word
+    for (let i = 0; i < this.choices.length; i++) {
+        if (this.choices[i].id == this.currentWord.id) {
+            this.choices.splice(i, 1);
+            break;
+        }
+    }
+
+    // end the game here
+    // first rotate the turn
+    this.turn = (this.turn + 1) % this.players.length;
+    // remove the new guesser word from rotation
+    let p = this.players[this.turn].id;
+    for (let i = 0; i < this.choices.length; i++) {
+        if (this.choices[i].id == p) {
+            this.choices.splice(i, 1);
+            break;
+        }
+    }
+
+    // no longer in game
+    this.isInGame = false;
+    // let the players know what happened
+    io.to(this.id).emit('round-results', {chooser: guesser.username, guessed: this.getPlayerWithID(guessID).username, correct: this.getPlayerWithID(this.currentWord.id).username});
+    this.updatePlayerList();
+}
+
+/**
+ * Store all created rooms in a map that associates room ID to the room.
+ */
+let rooms = new Map();
 
 io.on('connection', socket => {
     console.log(socket.id + " connected");
@@ -87,65 +237,89 @@ io.on('connection', socket => {
     // fetch this socket's IP
     let address = socket.handshake.address;
     console.log('new connection from ' + address);
+    // check if this client's IP has already joined a room
+    // if they have, simply display that room
+    // TODO: 
 
     io.to(socket.id).emit('connection', socket.id);
 
+    /**
+     * Request to create a room
+     */
+    socket.on("create-room", () => {
+        let room = new Room();
+        rooms.set(room.id, room);
+        io.to(socket.id).emit("created-room", room.id);
+    });
 
-    socket.on('submit-user', user => {
-        if (inGame) {
-            io.to(socket.id).emit('invalid-user', 'There\'s already an active game!<br>Try again later');
-            return;
-        }
-        console.log(user + " joined the game");
-        // check if that user exists
-        if (usernameExists(user)) {
-            io.to(socket.id).emit('invalid-user', 'That name already is being used');
+    let thisRoom = null;
+
+    /**
+     * Ensures that the given data is valid for joining a room
+     * i.e. correct room ID and a valid username
+     */
+    socket.on("join-room", data => {
+        let username = data.username;
+        let joinID = data.joinID;
+        // find the room of that ID
+        let room = rooms.get(joinID);
+        if (room == undefined) {
+            io.to(socket.id).emit('join-error', 'Invalid room code!');
         }
         else {
-            let valid = usernameIsValid(user);
-            if (valid == true) {
-                players.push({username: user, id: socket.id, points: 0});
-                socket.join(lobby);
-                io.to(lobby).emit('users-update', {players: players, guesserIndex: guesserIndex, choices: choices});
+            if (room.isInGame) {
+                io.to(socket.id).emit('join-error', "There\'s already an active game! Try again later");
             }
-            else if (valid == "notsize") {
-                io.to(socket.id).emit("invalid-user", "Your username must be between 1 and 20 characters");
+            else if (room.usernameExists(username)) {
+                io.to(socket.id).emit('join-error', 'That name is already taken!');
             }
             else {
-                io.to(socket.id).emit('invalid-user', "Your username can only contain letters, numbers, and underscores");
+                let valid = usernameIsValid(username);
+                if (valid == true) {
+                    // then make a player and add it to the room.
+                    let player = new Player(username, address, socket.id);
+                    thisRoom = room;
+                    socket.join(room.id);
+                    room.players.push(player);
+                    room.updatePlayerList();
+                }
+                else {
+                    io.to(socket.id).emit('join-error', valid);
+                }
             }
         }
     });
 
     socket.on('submit-article', article => {
         // double check that this socket has not submitted an article already
-        for (let i = 0; i < choices.length; i++) {
-            if (choices[i].id == socket.id) {
+        for (let i = 0; i < thisRoom.choices.length; i++) {
+            if (thisRoom.choices[i].id == socket.id) {
                 return; // already submitted one!
             }
         }
         article = formatArticle(article);
         // add that article to the list of choices
-        choices.push({article: article, id: socket.id});
-        io.to(lobby).emit('users-update', {players: players, guesserIndex: guesserIndex, choices: choices});
+        thisRoom.choices.push(new Choice(article, socket.id));
+        thisRoom.updatePlayerList();
     });
 
     socket.on("start-round", () => {
         // first thing to do is choose a badinga
-        currentWord = chooseArticle();
-        inGame = true;
-        io.to(lobby).emit("start-round", {word: currentWord, players: players, turn: guesserIndex});
+        thisRoom.startRound();
+        // then start the damn badinga!
     });
 
     socket.on("guess-user", (id) => {
+        thisRoom.makeGuess(id);
+        return;
         // check if the guess was correct
-        if (id == currentWord.id) {
+        if (id == thisRoom.currentWord.id) {
             // add points or whatever
-            for (let i = 0; i < players.length; i++) {
-                if (players[i].id == socket.id) {
-                    players[i].points += 1; // if they guessed the right player, they get 1 point
+            for (let i = 0; i < thisRoom.players.length; i++) {
+                if (thisRoom.players[i].id == socket.id) {
+                    thisRoom.players[i].points += 1; // if they guessed the right player, they get 1 point
                 }
-                else if (players[i].id == currentWord.id) {
+                else if (thisRoom.players[i].id == thisRoom.currentWord.id) {
                     players[i].points += 1; // that player also gets a point for describing the topic so believably.
                 }
             }
@@ -213,6 +387,7 @@ io.on('connection', socket => {
     });
 
     socket.on('disconnect', () => {
+        return;
         console.log(socket.id + " disconnected");
         let playerInGame = false;
         // find the player with that ID and remove them
@@ -237,6 +412,8 @@ io.on('connection', socket => {
     });
 });
 
+
+// if an environment PORT is set, use that, otherwise use port 80 (default port for web traffic)
 let port = process.env.PORT || 80;
 server.listen(process.env.PORT || 80, () => {
     console.log("listening on *:" + port);

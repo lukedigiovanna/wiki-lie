@@ -2,30 +2,61 @@
 let socket = io();
 let ourID;
 
+/**
+ * Signals entry tasks
+ */
 socket.on('connection', (id) => {
     ourID = id; // useful for checking when it's our turn for an action or other user specific UI elements
-    $("#main").load("signin.html");
+    $("#main").load("signin.html"); // load in the sign in page
 })
 
-function join() {
-    // read the inputted username
-    let user = $("#username-input").val();
-    socket.emit("submit-user", user);
+/**
+ * Attempts to join the room given the inputted ID
+ * and username
+ */
+function joinRoom() {
+    let roomID = $("#room-id-input").val().toUpperCase();
+    join(roomID);
 }
 
-socket.on('invalid-user', reason => {
-    $("#invalid-user").text(reason);  
+/**
+ * Sends a request to the server to create a room and 
+ * the server will then send back a message to the user when
+ * it is ready to join. (happens instantly)
+ */
+function createRoom() {
+    socket.emit("create-room");
+}
+socket.on("created-room", (id) => {
+    join(id);
 });
 
-socket.on('start-round', (data) => {
-    let word = data.word;
-    let players = data.players;
-    let turn = data.turn;
+/**
+ * Attempts to join a given room.
+ * @param {string} roomID Join code for the room
+ */
+function join(roomID) {
+    // read the inputted username
+    let user = document.getElementById("username-input").value;
+    // message the server for the client to join
+    socket.emit("join-room", {username: user, joinID: roomID});
+}
+
+/**
+ * Displays an error for not being able to join a room
+ */
+socket.on('join-error', reason => {
+    $("#join-error").text(reason);  
+});
+
+socket.on('start-round', (room) => {
+    let word = room.currentWord;
+    let players = room.players;
+    let turn = room.turn;
     restartTimer();
     // we just need to update that input area
     $("#input").load("round.html", () => {
         $("#everyone-word").text(word.article);
-        console.log(word.article);
         // check if we are the guesser
         if (weAreGuesser) {
             // list out buttons to choose each other player
@@ -61,8 +92,10 @@ socket.on("round-results", results => {
     }, 15000);
 });
 
+/**
+ * TIMER STUFF:
+ */
 let last;
-
 /**
  * Get's the time of the computer
  * @returns Time in seconds since jan 1 1970
@@ -70,16 +103,13 @@ let last;
 function time() {
     return (new Date()).getTime() / 1000;
 }
-
 function restartTimer() {
     last = time()
 }
-
 function formatNum(num) {
     if (num < 10) return "0" + num;
     else return num;
 }
-
 setInterval(() => {
     let elapsed = Math.floor(time() - last); // stored in seconds
     let minutes = formatNum(Math.floor(elapsed / 60))
@@ -88,10 +118,13 @@ setInterval(() => {
     $("#timer").text(minutes + ":" + seconds);
 }, 50);
 
-socket.on('users-update', data => {
-    let turn = data.guesserIndex;
-    let players = data.players;
-    let choices = data.choices;
+// 
+// END TIMER STUFF
+
+socket.on('users-update', room => {
+    let turn = room.turn;
+    let players = room.players;
+    let choices = room.choices;
 
     $("#main").load("players.html", () => {
         if (players.length < 3) {
@@ -102,6 +135,8 @@ socket.on('users-update', data => {
             $("#player-count").text(players.length);
             $("#player-count").css("color", "green");
         }
+
+        $("#join-code").text(room.id);
     
         $("#ready-count").text(choices.length + "/" + (players.length - 1));
         if (players.length >= 3 && choices.length == players.length - 1) {
@@ -210,7 +245,6 @@ function submitArticle() {
 }
 
 let weAreGuesser = false;
-
 function startRound() {
     // send a message to the server to begin the round.
     // the server will relay information back to all clients that the round has started and to update UI
@@ -225,8 +259,8 @@ window.onload = () => {
     $("#wikipedia").css("height", window.innerHeight + "px");
 }
 
-let isMobile = false;
 let revealed = false;
+let isMobile = false;
 function toggleReveal() {
     if (isMobile) {
         revealed = !revealed;
@@ -238,7 +272,6 @@ function toggleReveal() {
         }
     }
 }
-
 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
     isMobile = true;
 }

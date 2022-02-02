@@ -1,11 +1,13 @@
 <div style="text-align: center;">
+    <div id="start-buttons">
+        <button onclick="createRoomButtons();"> Create Room </button>
+        <button onclick="joinRoomButtons();"> Join Room </button> 
+    </div>
     
-    <input type="text" id="username-input" placeholder="username"> 
-    <button onclick="join();"> Join </button> 
-    
-    <br>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="signinbuttons.js"></script>
 
-    <p id="invalid-user" style="font-style: italic; color: red"></p>
+    <p id="join-error" style="font-style: italic; color: red"></p>
 
     <h3>
         How to Play:
