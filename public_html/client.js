@@ -217,7 +217,7 @@ socket.on('users-update', room => {
             });
         }
     
-        $("#wikipedia").css("display", "inline");
+        $("#wiki-section").css("display", "inline");
     });
 });
 
