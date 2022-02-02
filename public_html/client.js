@@ -121,12 +121,17 @@ setInterval(() => {
 // 
 // END TIMER STUFF
 
+function kick(id) {
+    socket.emit("kick-player", id);
+}
+
 socket.on('users-update', room => {
     let turn = room.turn;
     let players = room.players;
     let choices = room.choices;
 
     $("#main").load("players.html", () => {
+        // HEADER STUFF
         if (players.length < 3) {
             $("#player-count").text(players.length + "/3");
             $("#player-count").css("color", "red");
@@ -135,9 +140,7 @@ socket.on('users-update', room => {
             $("#player-count").text(players.length);
             $("#player-count").css("color", "green");
         }
-
         $("#join-code").text(room.id);
-    
         $("#ready-count").text(choices.length + "/" + (players.length - 1));
         if (players.length >= 3 && choices.length == players.length - 1) {
             $("#ready-count").css("color", "green");
@@ -146,21 +149,33 @@ socket.on('users-update', room => {
             $("#ready-count").css("color", "red");
         }
     
+        // THE PLAYER LIST
+        let us;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].id == ourID) {
+                us = players[i];
+                break;
+            }
+        }
         $('#player-list').html("");
         for (let i = 0; i < players.length; i++) {
             let user = players[i];
             let item = document.createElement("li");
             item.innerText = user.username;
-            if (user.id == ourID) {
-                item.style.fontWeight = "bold";
-                item.innerText += ' [you]'
-            }
+            // if we are also the host, add the kick button
             if (i == turn) {
                 item.style.color = "gold";
                 item.innerText += ' [guesser]';
                 if (user.id != ourID) {
                     weAreGuesser = false;
                 }
+            }
+            if (!user.connected && us.isHost) {
+                item.innerHTML += " [<span class=\'kick-button\' onclick=\'kick(\""+user.id+"\")\'>kick</span>]";
+            }
+            if (user.id == ourID) {
+                item.style.fontWeight = "bold";
+                item.innerText += ' [you]'
             }
             let chose = false;
             choices.forEach(choice => {
@@ -173,9 +188,15 @@ socket.on('users-update', room => {
             if (!chose && i != turn) {
                 item.innerHTML += " [choosing<span class='ellipsis'></span>]"
             }
-    
             item.innerHTML += " [" + user.points + " pts]";
-            
+            if (!user.connected) {
+                item.innerHTML += " [<span style='color: red'>disconnected</span>]"
+            }
+            if (user.isHost) {
+                item.innerHTML += " ⭐";
+            }
+
+
             $("#player-list").append(item);
         }
     
@@ -216,8 +237,11 @@ socket.on('users-update', room => {
                 }
             });
         }
-    
-        $("#wiki-section").css("display", "inline");
+        
+        // only reveal, if not in game
+        if (!room.isInGame) {
+            $("#wiki-section").css("display", "inline");
+        }
     });
 });
 

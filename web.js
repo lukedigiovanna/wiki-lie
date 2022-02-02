@@ -78,6 +78,7 @@ function Player(username, ip, socketID) {
     this.isHost = false;
     this.isGuesser = false;
     this.currentWord = null;
+    this.connected = true;
     this.points = 0;
 }
 
@@ -91,7 +92,6 @@ function Choice(article, socketID) {
     this.id = socketID;
 }
 
-// define the ROOM class
 /**
  * Class to represent a room, which is an instance of a game.
  * Contains information like the rooms ID, password, players, etc. 
@@ -149,6 +149,33 @@ Room.prototype.getPlayerWithID = function(id) {
  * players, choices, connectivity, etc.
  */
 Room.prototype.updatePlayerList = function() {
+    // establish if a host needs to be set
+    if (this.players.length == 1) {
+        this.players[0].isHost = true; // make that only player the host.
+    }
+    else {
+        // find the current host and establish if they are disconnected or not
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i].isHost && !this.players[i].connected) {
+                // set the host to be the next available player
+                this.players[i].isHost = false;
+                let foundNewHost = false;
+                for (let j = 1; j < this.players.length; j++) {
+                    let k = (i + j) % this.players.length;
+                    if (this.players[k].connected) {
+                        this.players[k].isHost = true;
+                        foundNewHost = true;
+                        break; // found a new host!
+                    }
+                }
+                if (!foundNewHost) {
+                    // then this room is dead, so delete it from the registry
+                    rooms.delete(this.id);
+                }
+            }
+        }
+    }
+
     io.to(this.id).emit("users-update", this);
 }
 
@@ -175,27 +202,68 @@ Room.prototype.getPlayerWithID = function(id) {
 }
 
 /**
+ * Kicks a player with a given ID
+ * @param {string} id ID of player to kick
+ */
+Room.prototype.kick = function(id) {
+    for (let i = 0; i < this.players.length; i++) {
+        if (this.players[i].id == id) {
+            this.players.splice(i, 1);
+            // check if we are in a game and this is a guesser that we are trying to kick out
+            if (this.isInGame && this.turn == i) {
+                // then we need to end the round
+                this.makeGuess("the guesser has left"); // tells the guess function a special message.
+            }
+            else {
+                if (i <= this.turn) {
+                    this.turn--;
+                }
+            }
+        }
+    }
+    // update the player list
+    this.updatePlayerList();
+}
+
+/**
  * 
  * @param {string} guessID Socket ID of the guess of the guesser
  */
 Room.prototype.makeGuess = function(guessID) {
     let guesser = this.players[this.turn];
-    // check if the guess was correct
-    if (guessID == this.currentWord.id) {
-        // add points 
-        guesser.points += 1; // to the guesser for guessing correctly
-        for (let i = 0; i < this.players.length; i++) {
-            if (this.players[i].id == this.currentWord.id) {
-                this.players[i].points += 1; // that player also gets a point for describing the topic so believably.
+    let guesserLeft = guessID == "the guesser has left"
+    
+    if (!guesserLeft) {
+        // check if the guess was correct
+        if (guessID == this.currentWord.id) {
+            // add points 
+            guesser.points += 1; // to the guesser for guessing correctly
+            for (let i = 0; i < this.players.length; i++) {
+                if (this.players[i].id == this.currentWord.id) {
+                    this.players[i].points += 1; // that player also gets a point for describing the topic so believably.
+                }
             }
         }
-    }
-    else { // the guess was incorrect
-        for (let i = 0; i < this.players.length; i++) {
-            if (this.players[i].id == guessID) {
-                this.players[i].points += 2; // if they tricked the guesser, they get 2 points
-                break;
+        else { // the guess was incorrect
+            for (let i = 0; i < this.players.length; i++) {
+                if (this.players[i].id == guessID) {
+                    this.players[i].points += 2; // if they tricked the guesser, they get 2 points
+                    break;
+                }
             }
+        }
+        
+        // end the game here
+        // first rotate the turn
+        this.turn = (this.turn + 1) % this.players.length;
+    }
+
+    // remove the new guesser word from rotation
+    let p = this.players[this.turn].id;
+    for (let i = 0; i < this.choices.length; i++) {
+        if (this.choices[i].id == p) {
+            this.choices.splice(i, 1);
+            break;
         }
     }
 
@@ -207,22 +275,10 @@ Room.prototype.makeGuess = function(guessID) {
         }
     }
 
-    // end the game here
-    // first rotate the turn
-    this.turn = (this.turn + 1) % this.players.length;
-    // remove the new guesser word from rotation
-    let p = this.players[this.turn].id;
-    for (let i = 0; i < this.choices.length; i++) {
-        if (this.choices[i].id == p) {
-            this.choices.splice(i, 1);
-            break;
-        }
-    }
-
     // no longer in game
     this.isInGame = false;
     // let the players know what happened
-    io.to(this.id).emit('round-results', {chooser: guesser.username, guessed: this.getPlayerWithID(guessID).username, correct: this.getPlayerWithID(this.currentWord.id).username});
+    io.to(this.id).emit('round-results', {guesserLeft: guesserLeft, chooser: guesser.username, guessed: this.getPlayerWithID(guessID).username, correct: this.getPlayerWithID(this.currentWord.id).username});
     this.updatePlayerList();
 }
 
@@ -311,82 +367,22 @@ io.on('connection', socket => {
 
     socket.on("guess-user", (id) => {
         thisRoom.makeGuess(id);
-        return;
-        // check if the guess was correct
-        if (id == thisRoom.currentWord.id) {
-            // add points or whatever
-            for (let i = 0; i < thisRoom.players.length; i++) {
-                if (thisRoom.players[i].id == socket.id) {
-                    thisRoom.players[i].points += 1; // if they guessed the right player, they get 1 point
-                }
-                else if (thisRoom.players[i].id == thisRoom.currentWord.id) {
-                    players[i].points += 1; // that player also gets a point for describing the topic so believably.
-                }
-            }
-        }
-        else {
-            for (let i = 0; i < players.length; i++) {
-                if (players[i].id == id) {
-                    players[i].points += 2; // if they tricked the guesser, they get 2 points
-                    break;
-                }
-            }
-        }
+    });
 
-        // remove that chosen word
-        for (let i = 0; i < choices.length; i++) {
-            if (choices[i].id == currentWord.id) {
-                choices.splice(i, 1);
-                break;
-            }
-        }
-
-        // end the game here
-        guesserIndex = (guesserIndex + 1) % players.length;
-        // remove the new guessers word from rotation
-        let p = players[guesserIndex].id;
-        for (let i = 0; i < choices.length; i++) {
-            if (choices[i].id == p) {
-                choices.splice(i, 1);
-                break;
-            }
-        }
-
-        inGame = false;
-        io.to(lobby).emit('round-results', {chooser: getPlayerWithID(socket.id).username, guessed: getPlayerWithID(id).username, correct: getPlayerWithID(currentWord.id).username});
-        playersToRemove.forEach(id => {
-            // find if there is a choice with that ID and remove it.
-            for (let i = 0; i < choices.length; i++) {
-                if (choices[i].id == id) {
-                    choices.splice(i, 1);
-                    break;
-                }
-            }
-            for (let i = 0; i < players.length; i++) {
-                if (players[i].id == id) {
-                    players.splice(i, 1);
-                    break;
-                }
-            }
-        });
-        playersToRemove = [];
-
-        if (players.length == 0) guesserIndex = 0;
-        else guesserIndex %= players.length; // bleep bloop, fix the guesser.
-        if (players.length > 0) { // only need to check this if anyone is left
-            // determine now if the player who became the guesser (if that was the case), has already made a choice
-            let guesserID = players[guesserIndex].id;
-            for (let i = 0; i < choices.length; i++) {
-                if (choices[i].id == guesserID) {
-                    choices.splice(i, 1); // unfortunate
-                    break;
-                }
-            }
-        }
-        io.to(lobby).emit("users-update", {players: players, guesserIndex: guesserIndex, choices: choices});
+    socket.on("kick-player", id => {
+        thisRoom.kick(id);
     });
 
     socket.on('disconnect', () => {
+        if (thisRoom != null) { // i.e. this client was in a game
+            let player = thisRoom.getPlayerWithID(socket.id);
+            if (thisRoom.isInGame) {
+                // UH OH!
+                // we must end the round.
+            }
+            player.connected = false;
+            thisRoom.updatePlayerList();
+        }
         return;
         console.log(socket.id + " disconnected");
         let playerInGame = false;

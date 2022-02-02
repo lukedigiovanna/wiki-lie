@@ -56,3 +56,14 @@ button:hover {
 button:disabled {
     background-color: lightgray;
 }
+
+.kick-button {
+    color: red;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.5s;
+}
+
+.kick-button:hover {
+    color: pink;
+}
