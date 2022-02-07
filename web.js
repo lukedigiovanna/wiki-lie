@@ -5,15 +5,26 @@ const server = http.createServer(app);
 const { Server, Socket } = require("socket.io");
 const io = new Server(server);
 
+// fetching wki pages
+const got = require('got');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
+
+
 app.use(express.static(__dirname + '/public_html'))
 
-// const fs = require("fs");
-// fs.readFile('users.txt', 'utf-8', (err, userdata) => {
+const fs = require("fs");
+let articles = ["Loudoun County", "Montgomery County", "Virginia Tech", "Harvard", "Page County", "Orange County", "China", "United States", "Gulf of Mexico", "Transistor", "Beijing", "London", "Afghanistan", "Kabul", "Taliban", "September 11th", "Chris Shields"];
+// fs.readFile('pages.txt', 'utf-8', (err, data) => {
 //     if (err) {
 //         console.log(err); return;
 //     }
-//     // do initial parse of userdata.
+//     // split by new line.
+//     articles = data.split("\n")
+//     for (let i = 0; i < 5; i++)
+//         console.log(articles[Math.floor(Math.random() * articles.length)]);
 // });
+
 
 /*
 UTILITY FUNCTIONS:
@@ -405,6 +416,30 @@ io.on('connection', socket => {
         if (playerInGame) {
             playersToRemove.push(socket.id);
         }
+    });
+
+    socket.on("random-article", () => {
+        let originalArticleName = articles[Math.floor(Math.random() * articles.length)];
+        // now send that article name to a python process
+        // console.log(articleName)
+        // let script = spawn("python", ['./fetchwiki.py', articleName]);
+        // script.stdout.on("data", data => {
+        //     console.log(data.toString())
+        //     io.to(socket.id).emit("random-article", data.toString());
+        // });
+
+        articleName = originalArticleName.replace(" ", "_").replace("\r", "")
+        // initiate an http request to the wikipedia API
+        const url = 'https://en.wikipedia.org/wiki/' + articleName;
+        got(url).then(response => {
+            const dom = new JSDOM(response.body);
+            let content = dom.window.document.querySelector('.mw-parser-output').innerHTML
+            // prepend the header
+            content = "<div class='mw-parser-output'> <h1 class='mw-first-heading'>" + originalArticleName + "</h1>" + content + '</div>';
+            io.to(socket.id).emit('random-article', content);
+        }).catch(err => {
+            console.log(err);
+        });
     });
 });
 

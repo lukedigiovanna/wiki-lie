@@ -1,1 +1,0 @@
-username, password, lifetime points, rounds played, times guessed correctly, times tricked the guesser

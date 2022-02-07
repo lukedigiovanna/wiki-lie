@@ -42,6 +42,41 @@ function join(roomID) {
     socket.emit("join-room", {username: user, joinID: roomID});
 }
 
+function randomArticle() {
+    // send a request to the server for a random article
+    socket.emit("random-article");
+}
+
+function removeTag(article, tagTitle) {
+    for (let i = 0; i < article.length; i++) {
+        if (article.substring(i, i + 1 + tagTitle.length) == '<' + tagTitle) {
+            // find the end of the substring
+            let j = i + 2 + tagTitle.length;
+            while (article.charAt(j) != ">")
+                j++;
+            // now remove that section
+            console.log(article.substring(i, j + 1));
+            article = article.substring(0, i) + article.substring(j + 1);
+            i--;
+        }
+        else if (article.substring(i, i + 3 + tagTitle.length) == '</'+tagTitle+'>') {
+            article = article.substring(0, i) + article.substring(i + 4 + tagTitle.length);
+        }
+    }
+
+    return article;
+}
+socket.on("random-article", article => {
+    // fix up the article name
+    // let url = "https://en.wikipedia.org/wiki/";
+    // url += articleName.replace(" ", "%20");
+    // $("#wikipedia").attr('src', url);
+    
+    // go through and remove all 'a' tags
+    article = removeTag(article, "sup");
+    $("#wiki-content").html(article);
+});
+
 /**
  * Displays an error for not being able to join a room
  */
