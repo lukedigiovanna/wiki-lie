@@ -14,16 +14,16 @@ const { JSDOM } = jsdom;
 app.use(express.static(__dirname + '/public_html'))
 
 const fs = require("fs");
-let articles = ["Loudoun County", "Montgomery County", "Virginia Tech", "Harvard", "Page County", "Orange County", "China", "United States", "Gulf of Mexico", "Transistor", "Beijing", "London", "Afghanistan", "Kabul", "Taliban", "September 11th", "Chris Shields"];
-// fs.readFile('pages.txt', 'utf-8', (err, data) => {
-//     if (err) {
-//         console.log(err); return;
-//     }
-//     // split by new line.
-//     articles = data.split("\n")
-//     for (let i = 0; i < 5; i++)
-//         console.log(articles[Math.floor(Math.random() * articles.length)]);
-// });
+let articles = [];
+fs.readFile('pages.txt', 'utf-8', (err, data) => {
+    if (err) {
+        console.log(err); return;
+    }
+    // split by new line.
+    articles = data.split("\n")
+    for (let i = 0; i < 5; i++)
+        console.log(articles[Math.floor(Math.random() * articles.length)]);
+});
 
 
 /*

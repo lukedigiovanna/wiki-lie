@@ -47,20 +47,26 @@ function randomArticle() {
     socket.emit("random-article");
 }
 
-function removeTag(article, tagTitle) {
+function removeTag(article, tagTitle, removeContent=false) {
     for (let i = 0; i < article.length; i++) {
         if (article.substring(i, i + 1 + tagTitle.length) == '<' + tagTitle) {
             // find the end of the substring
             let j = i + 2 + tagTitle.length;
-            while (article.charAt(j) != ">")
-                j++;
+            if (!removeContent) {
+                while (article.charAt(j) != ">")
+                    j++;
+            }
+            else {
+                while (article.substring(j, j + 3 + tagTitle.length) != '</' + tagTitle + '>') 
+                    j++;
+                j += 2 + tagTitle.length;
+            }
             // now remove that section
-            console.log(article.substring(i, j + 1));
             article = article.substring(0, i) + article.substring(j + 1);
             i--;
         }
         else if (article.substring(i, i + 3 + tagTitle.length) == '</'+tagTitle+'>') {
-            article = article.substring(0, i) + article.substring(i + 4 + tagTitle.length);
+            article = article.substring(0, i) + article.substring(i + 3 + tagTitle.length);
         }
     }
 
@@ -73,7 +79,8 @@ socket.on("random-article", article => {
     // $("#wikipedia").attr('src', url);
     
     // go through and remove all 'a' tags
-    article = removeTag(article, "sup");
+    article = removeTag(article, "sup", true);
+    article = removeTag(article, "a href");
     $("#wiki-content").html(article);
 });
 

@@ -121,6 +121,25 @@ caption {
     list-style: none;
 }
 
+.mw-parser-output ul, .mw-parser-output ol {
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+    color: #202122;
+    line-height: 1.6;
+}
+
+.mw-parser-output ul {
+    list-style-type: disc;
+}
+
+.mw-editsection {
+    display: none;
+}
+
 .mw-parser-output > h2 {
     margin-bottom: 0.25em;
     padding: 0;
@@ -195,4 +214,16 @@ caption {
     font-size: 94%;
     line-height: 1.4em;
     padding: 3px;
+}
+
+.templatequote .templatequotecite {
+    line-height: 1.5em;
+    text-align: left;
+    padding-left: 1.6em;
+    margin-top: 0;
+}
+
+.mw-parser-output cite {
+    font-style: inherit;
+    font-size: 0.875em;
 }

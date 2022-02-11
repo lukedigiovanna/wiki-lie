@@ -1,12 +1,12 @@
 import requests 
 import json
 
-page_name = "Ashleigh Barty"
-page_name = page_name.replace(" ", "_")
-res = requests.get("https://en.wikipedia.org/w/api.php?action=query&titles="+page_name+"&prop=pageviews&pvipdays=21&format=json")
-print(json.dumps(res.json()["query"]["pages"], indent=4))
+# page_name = "Ashleigh Barty"
+# page_name = page_name.replace(" ", "_")
+# res = requests.get("https://en.wikipedia.org/w/api.php?action=query&titles="+page_name+"&prop=pageviews&pvipdays=21&format=json")
+# print(json.dumps(res.json()["query"]["pages"], indent=4))
 
-exit()
+# exit()
 """ 
  Namespaces:
     0: Regular page titles
@@ -15,9 +15,17 @@ exit()
 
 wiki_url = "https://en.wikipedia.org/w/api.php?action=query&list=allpages&aplimit=max&apnamespace=0&format=json"
 
-output = open("pages.txt", "wb")
+output = open("pages.txt", "ab")
 
 cont = ""
+
+url = wiki_url + "&apfrom=UA".replace(" ", "_")
+result = requests.get(url)
+pagelist = result.json()
+for p in pagelist["query"]['allpages']:
+    title = p['title']
+    output.write(title.encode('utf-8') + b'\n')
+cont = pagelist["continue"]['apcontinue']
 
 more_articles = True 
 prev_title = ""
