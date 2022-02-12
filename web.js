@@ -15,15 +15,20 @@ app.use(express.static(__dirname + '/public_html'))
 
 const fs = require("fs");
 let articles = [];
-fs.readFile('pages.txt', 'utf-8', (err, data) => {
-    if (err) {
-        console.log(err); return;
-    }
-    // split by new line.
-    articles = data.split("\n")
-    for (let i = 0; i < 5; i++)
-        console.log(articles[Math.floor(Math.random() * articles.length)]);
-});
+let done = 0;
+for (let i = 0; i < 17; i++) {
+    fs.readFile('pages/page' + i + '.txt', 'utf-8', (err, data) => {
+        if (err) {
+            console.log(err); return;
+        }
+        // split by new line.
+        let addt = data.split("\n")
+        articles = articles.concat(addt)
+        done++;
+        console.log("Finished loading articles " + done + "/17");
+    });
+
+}
 
 
 /*
