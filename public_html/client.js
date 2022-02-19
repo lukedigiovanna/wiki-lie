@@ -2,6 +2,8 @@
 let socket = io();
 let ourID;
 
+let currentArticle = "";
+
 /**
  * Signals entry tasks
  */
@@ -49,6 +51,21 @@ function randomArticle() {
 
 function removeTag(article, tagTitle, removeContent=false) {
     for (let i = 0; i < article.length; i++) {
+        // skip table of contents
+        if (article.substring(i, i + '<div id="toc"'.length) == '<div id="toc"') {
+            console.log('found toc')
+            let divLevel = 1;
+            let j = i + 14;
+            while (divLevel > 0) {
+                j++;
+                if (article.substring(j, j + 4) == '<div')
+                    divLevel++;
+                else if (article.substring(j, j + 5) == '</div')
+                    divLevel--;
+            }
+            i = j + 6;
+        }
+        
         if (article.substring(i, i + 1 + tagTitle.length) == '<' + tagTitle) {
             // find the end of the substring
             let j = i + 2 + tagTitle.length;
@@ -72,12 +89,14 @@ function removeTag(article, tagTitle, removeContent=false) {
 
     return article;
 }
-socket.on("random-article", article => {
+socket.on("random-article", (article, articleName) => {
     // fix up the article name
     // let url = "https://en.wikipedia.org/wiki/";
     // url += articleName.replace(" ", "%20");
     // $("#wikipedia").attr('src', url);
     
+    currentArticle = articleName;
+
     // go through and remove all 'a' tags
     article = removeTag(article, "sup", true);
     article = removeTag(article, "a href");
@@ -292,21 +311,33 @@ let submittedWord = false;
 function submitArticle() {
     if (!submittedWord) {
         console.log("attempting to submit");
-        // fetch the given article name
-        let articleName = $("#submission").val();
-        if (articleName.length == 0) {
-            alert("Enter something!");
-        }
-        else {
-            // let the server know we are submitting an article.
-            socket.emit("submit-article", articleName);
+        
+        if (currentArticle != "") {
+            socket.emit("submit-article", currentArticle);
             submittedWord = true;
-
-            // then we need to replace the display area thing
+    
             $("#input").load("yourword.html", () => {
-                $("#word").text(articleName);
-            });
+                $("#word").text(currentArticle);
+            })
         }
+        
+        // OLD WAY USING TEXT INPUT
+        // fetch the given article name
+
+        // let articleName = $("#submission").val();
+        // if (articleName.length == 0) {
+        //     alert("Enter something!");
+        // }
+        // else {
+        //     // let the server know we are submitting an article.
+        //     socket.emit("submit-article", articleName);
+        //     submittedWord = true;
+
+        //     // then we need to replace the display area thing
+        //     $("#input").load("yourword.html", () => {
+        //         $("#word").text(articleName);
+        //     });
+        // }
     }
 }
 

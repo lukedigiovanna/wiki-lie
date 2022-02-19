@@ -15,20 +15,25 @@ app.use(express.static(__dirname + '/public_html'))
 
 const fs = require("fs");
 let articles = [];
-let done = 0;
-for (let i = 0; i < 17; i++) {
-    fs.readFile('pages/page' + i + '.txt', 'utf-8', (err, data) => {
-        if (err) {
-            console.log(err); return;
-        }
-        // split by new line.
-        let addt = data.split("\n")
-        articles = articles.concat(addt)
-        done++;
-        console.log("Finished loading articles " + done + "/17");
-    });
-
-}
+// let done = 0;
+// for (let i = 0; i < 17; i++) {
+//     fs.readFile('pages/page' + i + '.txt', 'utf-8', (err, data) => {
+//         if (err) {
+//             console.log(err); return;
+//         }
+//         // split by new line.
+//         let addt = data.split("\n")
+//         articles = articles.concat(addt)
+//         done++;
+//         console.log("Finished loading articles " + done + "/17");
+//     });
+// }
+fs.readFile('pages/cleanpages.txt', 'utf-8', (err, data) => {
+    if (err) {
+        console.log(err); return;
+    }
+    articles = data.split("\n")
+});
 
 
 /*
@@ -60,6 +65,12 @@ function usernameIsValid(user) {
  * @returns the formatted version of the article name
  */
 function formatArticle(article) {
+    // remove all tag after a (
+    let i = article.indexOf('(')
+    if (i > 0) {
+        article = article.substring(0, i);
+    }
+    return article;
     // follow rules that the beginning of each word should be upper case
     let tokens = article.split(' '); // separate by spaces
     for (let i = 0; i < tokens.length; i++) {
@@ -441,7 +452,7 @@ io.on('connection', socket => {
             let content = dom.window.document.querySelector('.mw-parser-output').innerHTML
             // prepend the header
             content = "<div class='mw-parser-output'> <h1 class='mw-first-heading'>" + originalArticleName + "</h1>" + content + '</div>';
-            io.to(socket.id).emit('random-article', content);
+            io.to(socket.id).emit('random-article', content, articleName);
         }).catch(err => {
             console.log(err);
         });
