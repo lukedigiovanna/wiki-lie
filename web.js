@@ -452,7 +452,7 @@ io.on('connection', socket => {
             let content = dom.window.document.querySelector('.mw-parser-output').innerHTML
             // prepend the header
             content = "<div class='mw-parser-output'> <h1 class='mw-first-heading'>" + originalArticleName + "</h1>" + content + '</div>';
-            io.to(socket.id).emit('random-article', content, articleName);
+            io.to(socket.id).emit('random-article', content, originalArticleName);
         }).catch(err => {
             console.log(err);
         });

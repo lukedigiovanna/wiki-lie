@@ -69,3 +69,11 @@ button:disabled {
 #wiki-buttons {
     text-align: center;
 }
+
+.choosing-icon {
+    height: 1.1rem;
+}
+
+#player-list li {
+    vertical-align: bottom;
+}

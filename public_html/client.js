@@ -49,11 +49,12 @@ function randomArticle() {
     socket.emit("random-article");
 }
 
-function removeTag(article, tagTitle, removeContent=false) {
+function removeTag(article, tags) {
+    let skippedTOC = false;
     for (let i = 0; i < article.length; i++) {
         // skip table of contents
-        if (article.substring(i, i + '<div id="toc"'.length) == '<div id="toc"') {
-            console.log('found toc')
+        if (!skippedTOC && article.substring(i, i + '<div id="toc"'.length) == '<div id="toc"') {
+            skippedTOC = true;
             let divLevel = 1;
             let j = i + 14;
             while (divLevel > 0) {
@@ -66,40 +67,36 @@ function removeTag(article, tagTitle, removeContent=false) {
             i = j + 6;
         }
         
-        if (article.substring(i, i + 1 + tagTitle.length) == '<' + tagTitle) {
-            // find the end of the substring
-            let j = i + 2 + tagTitle.length;
-            if (!removeContent) {
-                while (article.charAt(j) != ">")
-                    j++;
+        tags.forEach(details => {
+            let tagTitle = details[0];
+            let removeContent = details[1];
+            if (article.substring(i, i + 1 + tagTitle.length) == '<' + tagTitle) {
+                // find the end of the substring
+                let j = i + 2 + tagTitle.length;
+                if (!removeContent) {
+                    while (article.charAt(j) != ">")
+                        j++;
+                }
+                else {
+                    while (article.substring(j, j + 3 + tagTitle.length) != '</' + tagTitle + '>') 
+                        j++;
+                    j += 2 + tagTitle.length;
+                }
+                // now remove that section
+                article = article.substring(0, i) + article.substring(j + 1);
+                i--;
             }
-            else {
-                while (article.substring(j, j + 3 + tagTitle.length) != '</' + tagTitle + '>') 
-                    j++;
-                j += 2 + tagTitle.length;
+            else if (article.substring(i, i + 3 + tagTitle.length) == '</'+tagTitle+'>') {
+                article = article.substring(0, i) + article.substring(i + 3 + tagTitle.length);
             }
-            // now remove that section
-            article = article.substring(0, i) + article.substring(j + 1);
-            i--;
-        }
-        else if (article.substring(i, i + 3 + tagTitle.length) == '</'+tagTitle+'>') {
-            article = article.substring(0, i) + article.substring(i + 3 + tagTitle.length);
-        }
+        })
     }
 
     return article;
 }
 socket.on("random-article", (article, articleName) => {
-    // fix up the article name
-    // let url = "https://en.wikipedia.org/wiki/";
-    // url += articleName.replace(" ", "%20");
-    // $("#wikipedia").attr('src', url);
-    
     currentArticle = articleName;
-
-    // go through and remove all 'a' tags
-    article = removeTag(article, "sup", true);
-    article = removeTag(article, "a href");
+    article = removeTag(article, ["sup", true], ["a href", false]);
     $("#wiki-content").html(article);
 });
 
@@ -247,7 +244,8 @@ socket.on('users-update', room => {
                 }
             });
             if (!chose && i != turn) {
-                item.innerHTML += " [choosing<span class='ellipsis'></span>]"
+                item.innerHTML += " [<img src=\"reading-small.gif\" class=\"choosing-icon\" alt=\"choosing...\">]";
+                // item.innerHTML += " [choosing<span class='ellipsis'></span>]"
             }
             item.innerHTML += " [" + user.points + " pts]";
             if (!user.connected) {
@@ -276,11 +274,6 @@ socket.on('users-update', room => {
             if (!alreadyChose) {
                 submittedWord = false;
                 $("#input").load("inputarticle.html");
-                document.getElementById("input").addEventListener("keydown", (e) => {
-                    if (e.key == "Enter") {
-                        submitArticle();
-                    }
-                });
             }
             else {
                 $("#input").load("yourword.html", () => {
@@ -310,7 +303,7 @@ let submittedWord = false;
 
 function submitArticle() {
     if (!submittedWord) {
-        console.log("attempting to submit");
+        console.log("attempting to submit article: \'" + currentArticle + "\'");
         
         if (currentArticle != "") {
             socket.emit("submit-article", currentArticle);
@@ -320,24 +313,6 @@ function submitArticle() {
                 $("#word").text(currentArticle);
             })
         }
-        
-        // OLD WAY USING TEXT INPUT
-        // fetch the given article name
-
-        // let articleName = $("#submission").val();
-        // if (articleName.length == 0) {
-        //     alert("Enter something!");
-        // }
-        // else {
-        //     // let the server know we are submitting an article.
-        //     socket.emit("submit-article", articleName);
-        //     submittedWord = true;
-
-        //     // then we need to replace the display area thing
-        //     $("#input").load("yourword.html", () => {
-        //         $("#word").text(articleName);
-        //     });
-        // }
     }
 }
 
