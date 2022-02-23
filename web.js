@@ -10,7 +10,6 @@ const got = require('got');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
-
 app.use(express.static(__dirname + '/public_html'))
 
 const fs = require("fs");
@@ -203,7 +202,9 @@ Room.prototype.updatePlayerList = function() {
         }
     }
 
-    io.to(this.id).emit("users-update", this);
+    if (!this.isInGame) {
+        io.to(this.id).emit("users-update", this);
+    }
 }
 
 /**
@@ -316,15 +317,37 @@ let rooms = new Map();
 
 io.on('connection', socket => {
     console.log(socket.id + " connected");
-
+    
     // fetch this socket's IP
     let address = socket.handshake.address;
     console.log('new connection from ' + address);
     // check if this client's IP has already joined a room
     // if they have, simply display that room
-    // TODO: 
+    
+    let thisRoom = null;
+    // look through all rooms
+    let reconnected = false;
+    rooms.forEach(room => {
+        // now check if that ip is in the room
+        room.players.forEach(player => {
+            if (!player.connected && player.ip == address) {
+                // then this ip address is already connected to a room, but they disconnected.
+                // so let's just tell them to join that room
+                player.id = socket.id; // update that players id to this socket
+                player.connected = true; // the player is now connected again.
+                socket.join(room.id); // let this socket join the room.
+                room.updatePlayerList();
+                io.to(socket.id).emit("update-id", socket.id);
+                reconnected = true;
+                thisRoom = room;
+                return;
+            }
+        });
+    });
 
-    io.to(socket.id).emit('connection', socket.id);
+    if (!reconnected) {
+        io.to(socket.id).emit('connection', socket.id);
+    }
 
     /**
      * Request to create a room
@@ -335,7 +358,6 @@ io.on('connection', socket => {
         io.to(socket.id).emit("created-room", room.id);
     });
 
-    let thisRoom = null;
 
     /**
      * Ensures that the given data is valid for joining a room
@@ -403,34 +425,8 @@ io.on('connection', socket => {
     socket.on('disconnect', () => {
         if (thisRoom != null) { // i.e. this client was in a game
             let player = thisRoom.getPlayerWithID(socket.id);
-            if (thisRoom.isInGame) {
-                // UH OH!
-                // we must end the round.
-            }
             player.connected = false;
             thisRoom.updatePlayerList();
-        }
-        return;
-        console.log(socket.id + " disconnected");
-        let playerInGame = false;
-        // find the player with that ID and remove them
-        for (let i = 0; i < players.length; i++) {
-            if (players[i].id == socket.id) {
-                playerInGame = true;
-                break;
-            }
-        }
-        if (!inGame) {
-            for (let i = 0; i < players.length; i++) {
-                if (players[i].id == socket.id) {
-                    players.splice(i, 1);
-                    break;
-                }
-            }
-            io.to(lobby).emit("users-update", {players: players, guesserIndex: guesserIndex, choices: choices});
-        }
-        if (playerInGame) {
-            playersToRemove.push(socket.id);
         }
     });
 

@@ -1,9 +1,4 @@
-with open("pages.txt", "wb") as fuck:
-    lines = fuck.readlines()
-    for i in range(7500000, 12000000):
-        if lines[i] == 'K++':
-            print(i)
-            break
+
 # import sys
 # from bs4 import BeautifulSoup
 # import requests
@@ -28,11 +23,11 @@ with open("pages.txt", "wb") as fuck:
 
 # sys.stdout.flush()
 
-# # import sys 
-# # import requests
-# # article_name = sys.argv[1]
-# # article_name = article_name.replace(" ", "_").strip("\r")
-# # res = requests.get("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles="+article_name+"&formatversion=2&exsentences=10&exlimit=1&explaintext=1")
-# # print(res.json()["query"]["pages"][0]["extract"])
-# # # print(sys.argv[1])
-# # sys.stdout.flush()
+# import sys 
+# import requests
+# article_name = sys.argv[1]
+# article_name = article_name.replace(" ", "_").strip("\r")
+# res = requests.get("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles="+article_name+"&formatversion=2&exsentences=10&exlimit=1&explaintext=1")
+# print(res.json()["query"]["pages"][0]["extract"])
+# # print(sys.argv[1])
+# sys.stdout.flush()

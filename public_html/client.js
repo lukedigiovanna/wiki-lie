@@ -12,6 +12,10 @@ socket.on('connection', (id) => {
     $("#main").load("signin.html"); // load in the sign in page
 })
 
+socket.on('update-id', id => {
+    ourID = id;
+})
+
 /**
  * Attempts to join the room given the inputted ID
  * and username
@@ -96,7 +100,8 @@ function removeTag(article, tags) {
 }
 socket.on("random-article", (article, articleName) => {
     currentArticle = articleName;
-    article = removeTag(article, ["sup", true], ["a href", false]);
+    $("#choose-button").prop('disabled', false);
+    article = removeTag(article, [["sup", true], ["a href", false]]);
     $("#wiki-content").html(article);
 });
 
@@ -228,6 +233,7 @@ socket.on('users-update', room => {
                     weAreGuesser = false;
                 }
             }
+            console.log(user);
             if (!user.connected && us.isHost) {
                 item.innerHTML += " [<span class=\'kick-button\' onclick=\'kick(\""+user.id+"\")\'>kick</span>]";
             }
@@ -244,7 +250,7 @@ socket.on('users-update', room => {
                 }
             });
             if (!chose && i != turn) {
-                item.innerHTML += " [<img src=\"reading-small.gif\" class=\"choosing-icon\" alt=\"choosing...\">]";
+                item.innerHTML += " [<img src=\"reading-animation-thick.gif\" class=\"choosing-icon\" alt=\"choosing...\">]";
                 // item.innerHTML += " [choosing<span class='ellipsis'></span>]"
             }
             item.innerHTML += " [" + user.points + " pts]";
@@ -274,11 +280,18 @@ socket.on('users-update', room => {
             if (!alreadyChose) {
                 submittedWord = false;
                 $("#input").load("inputarticle.html");
+                if (currentArticle == "") {
+                    $("#choose-button").prop('disabled', true);
+                }
+                else {
+                    $("#choose-button").prop('disabled', false);
+                }
             }
             else {
                 $("#input").load("yourword.html", () => {
                     $("#word").text(chosenArticle);
                 });
+
             }
         }
         else {

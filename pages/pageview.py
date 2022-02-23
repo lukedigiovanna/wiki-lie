@@ -18,24 +18,30 @@ writerow([b'article_name', b'is_good', b'view_count'])
 all = bad + good 
 
 for article in all:
-    article_name = article[0]
-    good = article[1]
-    res = requests.get(b"https://en.wikipedia.org/w/api.php?action=query&titles="+article_name.replace(b" ", b"_")+b"&prop=pageviews&pvipdays=60&format=json")
-    print(b"https://en.wikipedia.org/w/api.php?action=query&titles="+article_name.replace(b" ", b"_")+b"&prop=pageviews&pvipdays=60&format=json")
-    data = res.json()['query']['pages']
-    pageid = list(data.keys())[0]
-    viewdata = data[pageid]['pageviews']
-    print(viewdata)
-    average = 0
-    count = 0 
-    for views in viewdata.values():
-        if views:
-            count += 1
-            average += views 
-    if count == 0:
-        print(article_name)
-        continue
-    print(article_name, average / count)
-    writerow([article_name, good, average / count])
+    try:
+        article_name = article[0]
+        good = article[1]
+        pagetitle = article_name.replace(b' ', b'_')
+        res = requests.get('https://en.wikipedia.org/w/api.php?', params={
+            'action': 'query', 
+            'prop': 'pageviews', 
+            'titles': pagetitle, 
+            'format': 'json'
+        })
+        data = res.json()['query']['pages']
+        pageid = list(data.keys())[0]
+        viewdata = data[pageid]['pageviews']
+        average = 0
+        count = 0 
+        for views in viewdata.values():
+            if views:
+                count += 1
+                average += views
+        if count != 0:
+            average /= count 
+        print("{}\t{}".format(article_name, average))
+        writerow([b"\""+article_name+b"\"", str(good).encode('utf-8'), str(average).encode('utf-8')])
+    except:
+        print("something went wrong: ", article)
 
 output_file.close()
