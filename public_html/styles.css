@@ -74,6 +74,39 @@ button:disabled {
     height: 1.1rem;
 }
 
+
 #player-list li {
     vertical-align: bottom;
+}
+
+#wiki-drop-down {
+    display: block;
+    max-width: 800px;
+    margin: auto;
+    background-color: 'blue';
+}
+
+.drop-down-line {
+    width: 100%;
+    text-align: left;
+    border-bottom: 1px solid black;
+    line-height: 0.1em;
+    margin: 10px 0 20px;
+    font-size: 1.5rem;
+}
+
+.drop-down-line span {
+    margin-left: 20px;
+    background: #fff;
+    padding: 0 10px;
+    transition: color 0.6s;
+}
+
+.drop-down-line span:hover {
+    color: #aaa;
+}
+
+#wiki-content {
+    overflow: hidden;
+    transition: height 0.75s;
 }

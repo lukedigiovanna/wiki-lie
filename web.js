@@ -340,7 +340,10 @@ io.on('connection', socket => {
                 io.to(socket.id).emit("update-id", socket.id);
                 reconnected = true;
                 thisRoom = room;
-                return;
+                return; // stop looping through other players
+            }
+            if (reconnected) {
+                return; // stop looping through the rooms
             }
         });
     });

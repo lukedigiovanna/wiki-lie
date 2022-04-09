@@ -261,52 +261,52 @@ socket.on('users-update', room => {
                 item.innerHTML += " ⭐";
             }
 
-
+            
             $("#player-list").append(item);
-        }
-    
-        let guesserID = players[turn].id;
-        if (guesserID != ourID) {
-            // make sure we haven't already guessed
-            let alreadyChose = false;
-            let chosenArticle;
-            for (let i = 0; i < choices.length; i++) {
-                if (choices[i].id == ourID) {
-                    alreadyChose = true;
-                    chosenArticle = choices[i].article;
-                    break;
-                }
-            }
-            if (!alreadyChose) {
-                submittedWord = false;
-                $("#input").load("inputarticle.html");
-                if (currentArticle == "") {
-                    $("#choose-button").prop('disabled', true);
-                }
-                else {
-                    $("#choose-button").prop('disabled', false);
-                }
-            }
-            else {
-                $("#input").load("yourword.html", () => {
-                    $("#word").text(chosenArticle);
-                });
-
-            }
-        }
-        else {
-            // we are the guesser
-            $("#input").load("guesserwait.html", () => {
-                console.log("loading start button");
-                if (players.length >= 3 && choices.length >= players.length - 1) {
-                    document.getElementById("start-button").disabled = false;
-                    console.log($("#start-button").text());
-                }
-            });
         }
         
         // only reveal, if not in game
         if (!room.isInGame) {
+            let guesserID = players[turn].id;
+            if (guesserID != ourID) {
+                // make sure we haven't already guessed
+                let alreadyChose = false;
+                let chosenArticle;
+                for (let i = 0; i < choices.length; i++) {
+                    if (choices[i].id == ourID) {
+                        alreadyChose = true;
+                        chosenArticle = choices[i].article;
+                        break;
+                    }
+                }
+                if (!alreadyChose) {
+                    submittedWord = false;
+                    $("#input").load("inputarticle.html");
+                    if (currentArticle == "") {
+                        $("#choose-button").prop('disabled', true);
+                    }
+                    else {
+                        $("#choose-button").prop('disabled', false);
+                    }
+                }
+                else {
+                    $("#input").load("yourword.html", () => {
+                        $("#word").text(chosenArticle);
+                    });
+
+                }
+            }
+            else {
+                // we are the guesser
+                $("#input").load("guesserwait.html", () => {
+                    console.log("loading start button");
+                    if (players.length >= 3 && choices.length >= players.length - 1) {
+                        document.getElementById("start-button").disabled = false;
+                        console.log($("#start-button").text());
+                    }
+                });
+            }
+        
             $("#wiki-section").css("display", "inline");
         }
     });
