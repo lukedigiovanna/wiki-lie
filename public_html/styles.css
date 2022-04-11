@@ -74,6 +74,26 @@ button:disabled {
     height: 1.1rem;
 }
 
+#join-code-section {
+    font-weight: bold; 
+    background-color: #EEE; 
+    border-radius: 5px; 
+    padding: 4px;
+    transition: 0.6s;
+    color: #000;
+}
+
+#join-code-section:hover {
+    padding: 7px;
+    color: #111;
+    background-color: #DDD;
+}
+
+#join-code-section:active {
+    padding: 5px;
+    color: #000;
+    background-color: #FFF;
+}
 
 #player-list li {
     vertical-align: bottom;
@@ -89,7 +109,7 @@ button:disabled {
 .drop-down-line {
     width: 100%;
     text-align: left;
-    border-bottom: 1px solid black;
+    border-bottom: 2px solid #666;
     line-height: 0.1em;
     margin: 10px 0 20px;
     font-size: 1.5rem;
@@ -109,4 +129,11 @@ button:disabled {
 #wiki-content {
     overflow: hidden;
     transition: height 0.75s;
+}
+
+#wiki-intro-title {
+    font-size: 2em; 
+    font-family: Roboto Mono; 
+    text-align: center;
+    margin-bottom: 3em;
 }

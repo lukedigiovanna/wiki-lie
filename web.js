@@ -202,9 +202,9 @@ Room.prototype.updatePlayerList = function() {
         }
     }
 
-    if (!this.isInGame) {
+    // if (!this.isInGame) {
         io.to(this.id).emit("users-update", this);
-    }
+    // }
 }
 
 /**

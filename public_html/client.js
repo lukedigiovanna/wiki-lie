@@ -103,6 +103,7 @@ socket.on("random-article", (article, articleName) => {
     $("#choose-button").prop('disabled', false);
     article = removeTag(article, [["sup", true], ["a href", false]]);
     $("#wiki-content").html(article);
+    forceOpenWikipedia();
 });
 
 /**
@@ -307,7 +308,11 @@ socket.on('users-update', room => {
                 });
             }
         
-            $("#wiki-section").css("display", "inline");
+            // only show the wiki section if it was hidden.
+            if (document.getElementById("wiki-section").style.display == 'none') {
+                $("#wiki-section").css("display", "inline");
+                setWikiHeight();
+            }
         }
     });
 });

@@ -3,7 +3,10 @@
         Players: 
         <span id="player-count"> 0/3 </span> in; 
         <span id="ready-count"></span> ready;
-        Join Code: <span id="join-code" style="font-weight: bold; background-color: #EEE; border-radius: 5px; padding: 4px;"></span>
+        Join Code: <span id="join-code-section" onclick="copyToClipboard(document.getElementById('join-code').innerText);">
+            <span id="join-code"></span>
+            <img src="clipboard.png" style="width: 0.5em; aspect-ratio: 1; vertical-align: text-top; margin: 3px; margin-left: -0.5em; margin-top: 0.2em;"/>
+        </span>
     </h3>
     <hr>
     <ul id="player-list">
