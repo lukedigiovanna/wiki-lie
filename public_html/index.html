@@ -16,32 +16,56 @@
         <meta name="theme-color" content="#ffffff">
     </head>
     <body>
-
-        <h1 id="title" class="lie-content">
-            Wiki-lie 
-        </h1>
-        
-        <div id="main" class="lie-content">
-            
-        </div>
-        
-        <div id="results" style="text-align: center;" class="lie-content">
-            
-        </div>
-        
-        <div id="input" class="lie-content">
-
-        </div>
-
-        <div id="wiki-section" style="display: none">
-            
-            <div id="wiki-drop-down" style="max-width: 800px">
-                <p class="drop-down-line"><span onclick="toggleWikiCollapse();" id="drop-down-arrow">▼</span></p>
+        <div id="all">
+            <div id="body">
+                <h1 id="title" class="lie-content">
+                    Wiki-lie 
+                </h1>
+                
+                <div id="main" class="lie-content">
+                    
+                </div>
+                
+                <div id="results" style="text-align: center;" class="lie-content">
+                    
+                </div>
+                
+                <div id="input" class="lie-content">
+    
+                </div>
+    
+                <div id="wiki-section" style="display: none">
+                    
+                    <div id="wiki-drop-down" style="max-width: 800px">
+                        <p class="drop-down-line"><span onclick="toggleWikiCollapse();" id="drop-down-arrow">▼</span></p>
+                    </div>
+    
+                    <div id="wiki-content">
+                        <p id="wiki-intro-title">~The World Awaits~</p>
+                        <img src="wikilogo.png" style="max-width: 400px; aspect-ratio: 1; display: block; margin: auto;"/>
+                    </div>
+                </div>
             </div>
+    
+            <div id="options-sidebar-parent">
+                <div onclick="toggleOptionsSidebar();">
+                    FUCK YOU.
+                </div>
 
-            <div id="wiki-content">
-                <p id="wiki-intro-title">~The World Awaits~</span> <br>
-                <img src="wikilogo.png" style="max-width: 400px; aspect-ratio: 1; display: block; margin: auto;"/>
+                <div id="options-sidebar">
+                    <h1>
+                        Game Options
+                    </h1>
+                    
+                    <div id="options">
+                        <div class="option">
+                            <p class="option-title">
+                                Category
+                            </p>
+                            <input type="select">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         

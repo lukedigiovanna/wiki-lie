@@ -68,3 +68,20 @@ function copyToClipboard(text) {
         }
     }
 }
+
+let sidebarShown = true;
+
+/**
+ * @pre The client is on the game page
+ */
+function toggleOptionsSidebar() {
+    sidebarShown = !sidebarShown;
+
+    const sidebarElement = document.getElementById("options-sidebar");
+    if (sidebarShown) {
+        sidebarElement.style.width = "400px";
+    }
+    else {
+        sidebarElement.style.width = 0;
+    }
+}
