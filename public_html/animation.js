@@ -91,6 +91,6 @@ function toggleOptionsSidebar() {
         sidebarElement.style.width = 0;
         body.style.width = "100%";
         sidebarElement.style.paddingLeft = 0;
-        sidebarElement.style.borderLeft = "0px solid #AAB";
+        // sidebarElement.style.borderLeft = "0px solid #AAB";
     }
 }

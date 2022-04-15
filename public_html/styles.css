@@ -179,14 +179,15 @@ button:disabled {
 
 #options-sidebar-tab {
     float: left;
-    background-color: rgb(47, 47, 89);
+    /* background-color: rgb(47, 47, 89); */
     width: 50px;
     height: 50px;
     border-top-left-radius: 7px;
     border-bottom-left-radius: 7px;
-    border-left: 2px solid lightblue;
-    border-top: 2px solid lightblue;
-    border-bottom: 2px solid lightblue;
+    border-left: 5px solid #AAB;
+    border-top: 5px solid #AAB;
+    border-bottom: 5px solid #AAB;
+    margin-top: 8px;
 }
 
 .option {
