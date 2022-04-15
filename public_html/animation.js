@@ -31,7 +31,7 @@ function forceOpenWikipedia() {
     // ensure we always get the height of the CONTENT
     let scrollHeight = document.getElementsByClassName('mw-parser-output')[0].scrollHeight + 20; // add 20 to ensure whole article is visible.
     element.style.height = scrollHeight + "px";
-    $('.drop-down-line span').text('▼')
+    $('.drop-down-line span').text('▼');
     down = true;
 }
 
@@ -69,7 +69,7 @@ function copyToClipboard(text) {
     }
 }
 
-let sidebarShown = true;
+let sidebarShown = false;
 
 /**
  * @pre The client is on the game page
@@ -78,10 +78,19 @@ function toggleOptionsSidebar() {
     sidebarShown = !sidebarShown;
 
     const sidebarElement = document.getElementById("options-sidebar");
+    const body = document.getElementById("body");
     if (sidebarShown) {
         sidebarElement.style.width = "400px";
+        body.style.width = "calc(100% - 400px)";
+        sidebarElement.style.paddingLeft = "15px";
+        sidebarElement.style.borderLeft = "5px solid #AAB";
+        sidebarElement.style.whiteSpace = "normal";
     }
     else {
+        sidebarElement.style.whiteSpace = "nowrap";
         sidebarElement.style.width = 0;
+        body.style.width = "100%";
+        sidebarElement.style.paddingLeft = 0;
+        sidebarElement.style.borderLeft = "0px solid #AAB";
     }
 }
