@@ -84,10 +84,8 @@ function toggleOptionsSidebar() {
         body.style.width = "calc(100% - 400px)";
         sidebarElement.style.paddingLeft = "15px";
         sidebarElement.style.borderLeft = "5px solid #AAB";
-        sidebarElement.style.whiteSpace = "normal";
     }
     else {
-        sidebarElement.style.whiteSpace = "nowrap";
         sidebarElement.style.width = 0;
         body.style.width = "100%";
         sidebarElement.style.paddingLeft = 0;

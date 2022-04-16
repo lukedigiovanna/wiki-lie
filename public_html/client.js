@@ -9,7 +9,7 @@ let currentArticle = "";
  */
 socket.on('connection', (id) => {
     ourID = id; // useful for checking when it's our turn for an action or other user specific UI elements
-    $("#main").load("signin.html"); // load in the sign in page
+    $("#main").load("./pages/signin.html"); // load in the sign in page
 })
 
 socket.on('update-id', id => {
@@ -119,7 +119,7 @@ socket.on('start-round', (room) => {
     let turn = room.turn;
     restartTimer();
     // we just need to update that input area
-    $("#input").load("round.html", () => {
+    $("#input").load("./pages/round.html", () => {
         $("#everyone-word").text(word.article);
         // check if we are the guesser
         if (weAreGuesser) {
@@ -142,7 +142,7 @@ socket.on('start-round', (room) => {
 });
 
 socket.on("round-results", results => {
-    $("#results").load("results.html", () => {
+    $("#results").load("./pages/results.html", () => {
         // set the values
         let str = "incorrectly"
         if (results.guessed == results.correct) {
@@ -194,7 +194,12 @@ socket.on('users-update', room => {
     let players = room.players;
     let choices = room.choices;
 
-    $("#main").load("players.html", () => {
+    // fill in information for the sidebar.
+    $("#options-sidebar-parent").load("./pages/optionssidebar.html", () => {
+        // fill in information for the sidebar about the given room/players.
+    });
+
+    $("#main").load("./pages/players.html", () => {
         // HEADER STUFF
         if (players.length < 3) {
             $("#player-count").text(players.length + "/3");
@@ -251,7 +256,7 @@ socket.on('users-update', room => {
                 }
             });
             if (!chose && i != turn) {
-                item.innerHTML += " [<img src=\"reading-animation-thick.gif\" class=\"choosing-icon\" alt=\"choosing...\">]";
+                item.innerHTML += " [<img src=\"./assets/reading-animation-thick.gif\" class=\"choosing-icon\" alt=\"choosing...\">]";
                 // item.innerHTML += " [choosing<span class='ellipsis'></span>]"
             }
             item.innerHTML += " [" + user.points + " pts]";
@@ -282,7 +287,7 @@ socket.on('users-update', room => {
                 }
                 if (!alreadyChose) {
                     submittedWord = false;
-                    $("#input").load("inputarticle.html");
+                    $("#input").load("./pages/inputarticle.html");
                     if (currentArticle == "") {
                         $("#choose-button").prop('disabled', true);
                     }
@@ -291,7 +296,7 @@ socket.on('users-update', room => {
                     }
                 }
                 else {
-                    $("#input").load("yourword.html", () => {
+                    $("#input").load("./pages/yourword.html", () => {
                         $("#word").text(chosenArticle);
                     });
 
@@ -299,7 +304,7 @@ socket.on('users-update', room => {
             }
             else {
                 // we are the guesser
-                $("#input").load("guesserwait.html", () => {
+                $("#input").load("./pages/guesserwait.html", () => {
                     console.log("loading start button");
                     if (players.length >= 3 && choices.length >= players.length - 1) {
                         document.getElementById("start-button").disabled = false;
@@ -327,7 +332,7 @@ function submitArticle() {
             socket.emit("submit-article", currentArticle);
             submittedWord = true;
     
-            $("#input").load("yourword.html", () => {
+            $("#input").load("./pages/yourword.html", () => {
                 $("#word").text(currentArticle);
             })
         }

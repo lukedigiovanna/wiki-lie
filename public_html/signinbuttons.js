@@ -5,7 +5,7 @@
  * client.
  */
 function createRoomButtons() {
-    $("#start-buttons").load("createroom.html");
+    $("#start-buttons").load("./pages/createroom.html");
 }
 
 /**
@@ -13,5 +13,5 @@ function createRoomButtons() {
  * direct the server to join a room with a specified ID.
  */
 function joinRoomButtons() {
-    $("#start-buttons").load("joinroom.html");
+    $("#start-buttons").load("./pages/joinroom.html");
 }
